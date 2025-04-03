@@ -1,0 +1,25 @@
+{
+  "name": "bitfactory-mcp",
+  "version": "0.1.0",
+  "description": "BitFactory MCP 是一个基于 Model Context Protocol (MCP) 的服务器实现，专门用于简化和标准化与 BitFactory API 的交互。",
+  "type": "module",
+  "bin": {
+    "bitfactory-mcp": "./build/index.js"
+  },
+  "files": [
+    "build"
+  ],
+  "scripts": {
+    "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
+    "prepare": "npm run build",
+    "watch": "tsc --watch",
+    "inspector": "npx @modelcontextprotocol/inspector build/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "0.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.24",
+    "typescript": "^5.3.3"
+  }
+}
