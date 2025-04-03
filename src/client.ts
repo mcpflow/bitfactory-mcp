@@ -1,4 +1,3 @@
-import { log } from "console";
 
 /**
 * Query client for BitOps API interaction
