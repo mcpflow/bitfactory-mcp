@@ -2,7 +2,7 @@
 /**
 * Query client for BitOps API interaction
 */
-export class QueryClient {
+export class BitFactoryClient {
     
 private readonly apiUrl: string;
 
@@ -19,7 +19,7 @@ constructor({ apiUrl }: { apiUrl: string }) {
    * @param apiSecret - The API secret (optional)
    * @returns The response from the API
    */
-async sendQuery({ apiSecret, path, params }: { apiSecret?: string, path?: string, params?: Record<string, string | number | boolean> } = {}): Promise<string> {
+async sendGet({ apiSecret, path, params }: { apiSecret?: string, path?: string, params?: Record<string, string | number | boolean> } = {}): Promise<string> {
     try {
       const headers: Record<string, string> = {
         'accept': '*/*'
@@ -67,6 +67,52 @@ async sendQuery({ apiSecret, path, params }: { apiSecret?: string, path?: string
     }
   }
 
+
+  /**
+   * Send a post request
+   * @param apiSecret - The API secret (optional)
+   * @param path - The path
+   * @param params - The params
+   * @returns The response from the API
+   */
+async sendPost({ apiSecret, path, params }: { apiSecret?: string, path?: string, params?: string } = {}): Promise<string> {
+  try {
+    const headers: Record<string, string> = {
+      'accept': '*/*',
+      'Content-Type': 'application/json'
+    };
+
+    if (apiSecret) {
+      headers['api-secret'] = apiSecret.trim();
+    }
+    
+    let url = this.apiUrl;
+    if (path) {
+      url += `/${path}`;
+    }
+    
+    const response = await fetch(url, {
+      method: "POST",
+      headers,
+      body: params
+    });
+  
+    const responseText = await response.text();
+    
+    if (!response.ok) {
+      throw new Error(`Request failed with status ${response.status}: ${response.statusText}\nResponse: ${responseText}`);
+    }
+
+    return responseText;
+    
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      throw new Error(`Query request failed: ${error.message}`);
+    }
+    throw new Error('Query request failed: Unknown error');
+  }
+}
+
   /**
    * Send a hello request
    * @param apiSecret - The API secret
@@ -74,7 +120,7 @@ async sendQuery({ apiSecret, path, params }: { apiSecret?: string, path?: string
    */ 
   async hello({ apiSecret }: { apiSecret: string }): Promise<string> {
     try {
-      const responseText = await this.sendQuery({
+      const responseText = await this.sendGet({
         apiSecret: apiSecret,
         path: 'hello'
       });
@@ -118,7 +164,7 @@ async getAccount({apiSecret, address, domainid, height, key }:
         params.key = key;
       }
 
-      const responseText = await this.sendQuery({
+      const responseText = await this.sendGet({
         apiSecret: apiSecret, 
         path: 'getAccount',
         params
@@ -155,7 +201,7 @@ async getAccount({apiSecret, address, domainid, height, key }:
           params.domainid = domainid;
         }
   
-        const responseText = await this.sendQuery({
+        const responseText = await this.sendGet({
           apiSecret: apiSecret, 
           path: 'getAccountBase',
           params
@@ -196,7 +242,7 @@ async getAccount({apiSecret, address, domainid, height, key }:
         params.key = key;
       }
 
-      const responseText = await this.sendQuery({
+      const responseText = await this.sendGet({
         apiSecret: apiSecret,
         path: 'getAccountMetaData',
         params
@@ -237,7 +283,7 @@ async getAccount({apiSecret, address, domainid, height, key }:
         params.with_leader = with_leader;
       }
 
-      const responseText = await this.sendQuery({
+      const responseText = await this.sendGet({
         apiSecret: apiSecret,
         path: 'getLedger',
         params
@@ -282,7 +328,7 @@ async getAccount({apiSecret, address, domainid, height, key }:
         params.limit = limit;
       }
 
-      const responseText = await this.sendQuery({
+      const responseText = await this.sendGet({
         apiSecret: apiSecret,
         path: 'getTransactionHistory',
         params
@@ -340,7 +386,7 @@ async getAccount({apiSecret, address, domainid, height, key }:
       if (ledger_seq !== undefined) {
         params.ledger_seq = ledger_seq;
       }
-      const responseText = await this.sendQuery({
+      const responseText = await this.sendGet({
         apiSecret: apiSecret,
         path: 'query',
         params
@@ -386,7 +432,7 @@ async getAccount({apiSecret, address, domainid, height, key }:
         params.address = address;
       }
       
-      const responseText = await this.sendQuery({
+      const responseText = await this.sendGet({
         apiSecret: apiSecret,
         path: 'getTransactionCache',
         params
@@ -421,7 +467,7 @@ async getAccount({apiSecret, address, domainid, height, key }:
         params.hash = hash;
       }
       
-      const responseText = await this.sendQuery({
+      const responseText = await this.sendGet({
         apiSecret: apiSecret,
         path: 'query/discard',
         params
@@ -443,7 +489,7 @@ async getAccount({apiSecret, address, domainid, height, key }:
    */
   async getTxCacheSize ({ apiSecret }:{ apiSecret: string}): Promise<string> {
     try {
-      const responseText = await this.sendQuery({
+      const responseText = await this.sendGet({
         apiSecret: apiSecret,
         path: 'getTxCacheSize'
       });
@@ -454,6 +500,89 @@ async getAccount({apiSecret, address, domainid, height, key }:
         throw new Error(`Get chain account failed: ${error.message}`);
       }
       throw new Error('Get chain account failed: Unknown error');
+    }
+  }
+
+  /**
+   * Apply for data
+   * @param data - The data
+   * @returns The apply for data
+   */
+  async apply ({data }: { data: Array<Record<string, string>> }): Promise<string> {
+    try {
+      const params: Record<string, Array<Record<string, string>>> = {
+        data: data
+      };
+      const responseText = await this.sendPost({
+        params: JSON.stringify(params)  
+      });
+      return responseText;
+
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new Error(`Get chain account failed: ${error.message}`);  
+      }
+      throw new Error('Get chain account failed: Unknown error');
+    }
+  }
+
+  async submitTransaction ({apiSecret, items }: {apiSecret: string, items: Array<Record<string, Array<Record<string, string>>>> }): Promise<string> {
+    try {
+      const params: Record<string, Array<Record<string, Array<Record<string, string>>>>> = {
+        items: items
+      };
+      const responseText = await this.sendPost({
+        apiSecret: apiSecret,
+        path: 'submitTransaction?lang=zh-cn',
+        params: JSON.stringify(params)  
+      });
+      return responseText;
+
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new Error(`Get chain account failed: ${error.message}`);  
+      }
+      throw new Error('Get chain account failed: Unknown error');
+    }
+  }
+
+  async callContract ({apiSecret, contract_address, domain_id, input, contract_balance, fee_limit, gas_price, source_address, code }:
+    {apiSecret: string, contract_address: string, domain_id: string|undefined, input: string, contract_balance: string|undefined, fee_limit: string|undefined, gas_price: string|undefined, source_address: string|undefined, code: string|undefined}): Promise<string> {
+    try {
+      const params: Record<string, string | number> = {
+        contract_address: contract_address,
+        input: input
+      };
+      if (domain_id !== undefined) {
+        params.domain_id = domain_id;
+      }
+      if (contract_balance !== undefined) {
+        params.contract_balance = contract_balance;
+      }
+      if (fee_limit !== undefined) {
+        params.fee_limit = fee_limit;
+      }
+      if (gas_price !== undefined) {
+        params.gas_price = gas_price;
+      }
+      if (source_address !== undefined) {
+        params.source_address = source_address;
+      }
+      if (code !== undefined) {
+        params.code = code;
+      }
+      const responseText = await this.sendPost({
+        apiSecret: apiSecret,
+        path: 'callContract',
+        params: JSON.stringify(params)
+      });
+      return responseText;
+
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new Error(`Call contract failed: ${error.message}`);
+      }
+      throw new Error('Call contract failed: Unknown error');
     }
   }
 }

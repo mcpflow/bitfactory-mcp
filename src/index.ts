@@ -15,7 +15,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { QueryClient } from "./client.js";
+import { BitFactoryClient } from "./client.js";
 
 /**
  * Create an MCP server with capabilities for resources (to list/read notes),
@@ -366,8 +366,137 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           }
         },
         required: ["apiKey", "apiSecret"]
+        }
+      },
+      {
+        name: "apply",
+        description: "账号备案上报",
+        inputSchema: {
+          type: "object",
+          properties: {
+            
+            data: {
+              type: "array",
+              description: "申请备案、取消备案bid集合",
+              items: {
+                type: "object",
+                properties: {
+                  bid: {
+                  type: "string",
+                  description: "申请账号"
+                },
+                status: { 
+                  type: "string",
+                  description: "账号状态,0:取消许可,1:许可(长度为1)"
+              }, 
+              required: ["bid", "status"]
+              }
+            }
+          },
+          required: ["data"]
+          }
+          }
+      },
+      {
+        name: "submitTransaction",
+        description: "提交交易",
+        inputSchema: {
+          type: "object",
+          properties: {
+            apiKey: {
+              type: "string",
+              description: "API key for authentication"
+            },
+            apiSecret: {
+              type: "string",
+              description: "header apiSecret"
+            },
+            items: {
+              type: "array",
+              description: "交易数据",
+              items: {
+                type: "object",
+                properties: {
+                  transaction_blob: {
+                    type: "string",
+                    description: "交易数据"
+                  },
+                  signatures: {
+                    type: "array",
+                    description: "签名信息",
+                    items: {
+                      type: "object",
+                      properties: {
+                        sign_data: {
+                          type: "string",
+                          description: "签名数据"
+                        },
+                        public_key: {
+                          type: "string",
+                          description: "签名公钥"
+                        }
+                      },
+                      required: ["sign_data","public_key"]
+                    }
+                  },
+                  required: ["transaction_blob","signatures"]
+                }
+              }
+            },
+            required: ["apiKey", "apiSecret","items"]
+          }
+        }
+      },
+      {
+        name: "callContract",
+        description: "查询合约调用数据",
+        inputSchema: {
+          type: "object",
+          properties: {
+            apiKey: {
+              type: "string",
+              description: "API key for authentication"
+            },
+            apiSecret: {
+              type: "string",
+              description: "header apiSecret"
+            },
+            contract_address: {
+              type: "string",
+              description: "合约地址"
+            },
+            domain_id: {
+              type: "string",
+              description: "如果不填,默认为主共识域"
+            },
+            input: {
+              type: "string",
+              description: "待调用的合约参数"
+            },
+            contract_balance: {
+              type: "string",
+              description: "合约余额设置"
+            },
+            fee_limit: {
+              type: "string",
+              description: "feelimit"
+            },
+            gas_price: {
+              type: "string",
+              description: "gasprice"
+            },
+            source_address: {
+              type: "string",
+              description: "源地址"
+            },
+            code: {
+              type: "string",
+              description: "可指定待执行的合约内容"
+            }
+          },
+          required: ["apiKey", "apiSecret","contract_address","domain_id","input","contract_balance","fee_limit","gas_price","source_address","code"]
+        }
       }
-    }
     ]
   };
 });
@@ -432,10 +561,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
       
       const baseUrl = `https://bif-testnet.bitfactory.cn/base/${apiKey}`;
-      const queryClient = new QueryClient({ apiUrl: baseUrl });
+      const bitFactoryClient = new BitFactoryClient({ apiUrl: baseUrl });
       
       try {
-        const result = await queryClient.getAccount({apiSecret, address, domainid, height, key });
+        const result = await bitFactoryClient.getAccount({apiSecret, address, domainid, height, key });
         const jsonResult = JSON.parse(result);
         return {
           content: [{
@@ -470,10 +599,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
       
       const baseUrl = `https://bif-testnet.bitfactory.cn/base/${apiKey}`;
-      const queryClient = new QueryClient({ apiUrl: baseUrl });
+      const bitFactoryClient = new BitFactoryClient({ apiUrl: baseUrl });
       
       try {
-        const result = await queryClient.getAccountBase({apiSecret, address, domainid});
+        const result = await bitFactoryClient.getAccountBase({apiSecret, address, domainid});
         const jsonResult = JSON.parse(result);
         return {
           content: [{
@@ -508,10 +637,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
       
       const baseUrl = `https://bif-testnet.bitfactory.cn/base/${apiKey}`;
-      const queryClient = new QueryClient({ apiUrl: baseUrl });
+      const bitFactoryClient = new BitFactoryClient({ apiUrl: baseUrl });
       
       try {
-        const result = await queryClient.getAccountMetaData({apiSecret, address, domainid, key});
+        const result = await bitFactoryClient.getAccountMetaData({apiSecret, address, domainid, key});
         const jsonResult = JSON.parse(result);
         return {
           content: [{
@@ -542,13 +671,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       if (!apiKey) {
         throw new Error("apiKey is required");
       }
-      
+    
       
       const baseUrl = `https://bif-testnet.bitfactory.cn/base/${apiKey}`;
-      const queryClient = new QueryClient({ apiUrl: baseUrl });
+      const bitFactoryClient = new BitFactoryClient({ apiUrl: baseUrl });
       
       try {
-        const result = await queryClient.getLedger({apiSecret,seq,domainid,with_validator,with_leader});
+        const result = await bitFactoryClient.getLedger({apiSecret,seq,domainid,with_validator,with_leader});
         const jsonResult = JSON.parse(result);
         return {
           content: [{
@@ -583,10 +712,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       
       
       const baseUrl = `https://bif-testnet.bitfactory.cn/base/${apiKey}`;
-      const queryClient = new QueryClient({ apiUrl: baseUrl });
+      const bitFactoryClient = new BitFactoryClient({ apiUrl: baseUrl });
       
       try {
-        const result = await queryClient.getTransactionHistory({apiSecret, domainid, hash, ledger_seq, start, limit});
+        const result = await bitFactoryClient.getTransactionHistory({apiSecret, domainid, hash, ledger_seq, start, limit});
         const jsonResult = JSON.parse(result);
         return {  
           content: [{
@@ -637,10 +766,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
       
       const baseUrl = `https://bif-testnet.bitfactory.cn/base/${apiKey}`;
-      const queryClient = new QueryClient({ apiUrl: baseUrl });
+      const bitFactoryClient = new BitFactoryClient({ apiUrl: baseUrl });
       
       try {
-        const result = await queryClient.query({apiSecret, bid, hash, tx_id, start_time, end_time, 
+        const result = await bitFactoryClient.query({apiSecret, bid, hash, tx_id, start_time, end_time, 
           tx_type, page, page_size, ledger_seq});
         const jsonResult = JSON.parse(result);
         return {  
@@ -679,10 +808,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
       
       const baseUrl = `https://bif-testnet.bitfactory.cn/base/${apiKey}`;
-      const queryClient = new QueryClient({ apiUrl: baseUrl });
+      const bitFactoryClient = new BitFactoryClient({ apiUrl: baseUrl });
       
       try {
-        const result = await queryClient.getTransactionCache({apiSecret, pool_type, domainid, limit, hash, address});
+        const result = await bitFactoryClient.getTransactionCache({apiSecret, pool_type, domainid, limit, hash, address});
         const jsonResult = JSON.parse(result);
         return {  
           content: [{
@@ -715,10 +844,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
       
       const baseUrl = `https://bif-testnet.bitfactory.cn/base/${apiKey}`;
-      const queryClient = new QueryClient({ apiUrl: baseUrl });
+      const bitFactoryClient = new BitFactoryClient({ apiUrl: baseUrl });
       
       try {
-        const result = await queryClient.queryDiscard({apiSecret, hash, page, page_size});
+        const result = await bitFactoryClient.queryDiscard({apiSecret, hash, page, page_size});
         const jsonResult = JSON.parse(result);
         return {  
           content: [{
@@ -748,10 +877,127 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
       
       const baseUrl = `https://bif-testnet.bitfactory.cn/base/${apiKey}`;
-      const queryClient = new QueryClient({ apiUrl: baseUrl });
+      const bitFactoryClient = new BitFactoryClient({ apiUrl: baseUrl });
       
       try {
-        const result = await queryClient.getTxCacheSize({apiSecret});
+        const result = await bitFactoryClient.getTxCacheSize({apiSecret});
+        const jsonResult = JSON.parse(result);
+        return {  
+          content: [{
+            type: "text",
+            text: JSON.stringify(jsonResult, null, 2)
+          }]
+        };
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          throw new Error(`Get chain account failed: ${error.message}`);
+        }
+        throw new Error('Get chain account failed: Unknown error');
+      }
+    }
+
+    case "apply": {
+      const args = request.params.arguments;
+      if (!args || typeof args !== 'object') {
+        throw new Error("Invalid arguments provided");
+      }
+    
+      const data = args.data;
+      if (!data) {
+        throw new Error("data is required");
+      } 
+      
+      const baseUrl = `https://bif-testnet.bitfactory.cn/permit/data/apply`;
+      const bitFactoryClient = new BitFactoryClient({ apiUrl: baseUrl });
+      
+      try {
+        const result = await bitFactoryClient.apply({data: data as Array<Record<string, string>>});
+        const jsonResult = JSON.parse(result);
+        return {  
+          content: [{
+            type: "text",
+            text: JSON.stringify(jsonResult, null, 2)
+          }]
+        };
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          throw new Error(`Get chain account failed: ${error.message}`);
+        }
+        throw new Error('Get chain account failed: Unknown error');
+      }
+    }
+
+    case "submitTransaction": {
+      const args = request.params.arguments;
+      if (!args || typeof args !== 'object') {
+        throw new Error("Invalid arguments provided");
+      }
+
+      const apiKey = String(args.apiKey || "").trim();
+      const apiSecret = String(args.apiSecret || "").trim();
+      
+      if (!apiKey) {
+        throw new Error("apiKey is required");
+      }
+    
+      const items = args.items;
+      if (!items) {
+        throw new Error("items is required");
+      } 
+      
+      const baseUrl = `https://bif-testnet.bitfactory.cn/base/${apiKey}`;
+      const bitFactoryClient = new BitFactoryClient({ apiUrl: baseUrl });
+      
+      try {
+        const result = await bitFactoryClient.submitTransaction({apiSecret ,items: items as Array<Record<string, Array<Record<string, string>>>>});
+        const jsonResult = JSON.parse(result);
+        return {  
+          content: [{
+            type: "text",
+            text: JSON.stringify(jsonResult, null, 2)
+          }]
+        };
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          throw new Error(`Get chain account failed: ${error.message}`);
+        }
+        throw new Error('Get chain account failed: Unknown error');
+      }
+    }
+
+    case "callContract": {
+      const args = request.params.arguments;
+      if (!args || typeof args !== 'object') {
+        throw new Error("Invalid arguments provided");
+      }
+
+      const apiKey = String(args.apiKey || "").trim();
+      const apiSecret = String(args.apiSecret || "").trim();
+      const contract_address = String(args.contract_address || "").trim();
+      const domain_id = String(args.domain_id || "").trim();
+      const input = String(args.input || "").trim();
+      const contract_balance = String(args.contract_balance || "").trim();
+      const fee_limit = String(args.fee_limit || "").trim();
+      const gas_price = String(args.gas_price || "").trim();
+      const source_address = String(args.source_address || "").trim();
+      const code = String(args.code || "").trim();
+
+      if (!apiKey) {
+        throw new Error("apiKey is required");
+      }
+      if (!contract_address) {
+        throw new Error("contract_address is required");
+      }
+      if (!input) {
+        throw new Error("input is required");
+      } 
+      
+
+      const baseUrl = `https://bif-testnet.bitfactory.cn/base/${apiKey}`;
+      const bitFactoryClient = new BitFactoryClient({ apiUrl: baseUrl });
+
+      try {
+        const result = await bitFactoryClient.callContract({apiSecret, contract_address, domain_id, input, contract_balance, fee_limit, gas_price, source_address, code});
         const jsonResult = JSON.parse(result);
         return {  
           content: [{
