@@ -276,12 +276,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             ledger_seq:{
               type: "number",
               description: "块高度"
+            }
           },
-          required: ["apiKey", "apiSecret","bid","hash","tx_id","start_time",
-            "end_time","tx_type","page","page_size","ledger_seq"]
+          required: ["apiKey", "apiSecret","bid","hash","tx_id","start_time","end_time","tx_type","page","page_size","ledger_seq"]
         }
-      }
-    },
+      },
     {
       name: "getTransactionCache",
       description: "查询交易缓存池数据列表",
@@ -382,20 +381,20 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                 type: "object",
                 properties: {
                   bid: {
-                  type: "string",
-                  description: "申请账号"
+                    type: "string",
+                    description: "申请账号"
+                  },
+                  status: {
+                    type: "string",
+                    description: "账号状态,0:取消许可,1:许可(长度为1)"
+                  }
                 },
-                status: { 
-                  type: "string",
-                  description: "账号状态,0:取消许可,1:许可(长度为1)"
-              }, 
-              required: ["bid", "status"]
+                required: ["bid", "status"]
               }
             }
           },
           required: ["data"]
-          }
-          }
+        }
       },
       {
         name: "submitTransaction",
@@ -436,15 +435,15 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                           description: "签名公钥"
                         }
                       },
-                      required: ["sign_data","public_key"]
+                      required: ["sign_data", "public_key"]
                     }
-                  },
-                  required: ["transaction_blob","signatures"]
-                }
+                  }
+                },
+                required: ["transaction_blob", "signatures"]
               }
-            },
-            required: ["apiKey", "apiSecret","items"]
-          }
+            }
+          },
+          required: ["apiKey", "apiSecret", "items"]
         }
       },
       {
