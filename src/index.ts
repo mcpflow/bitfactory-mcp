@@ -495,6 +495,182 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["apiKey", "apiSecret","contract_address","domain_id","input","contract_balance","fee_limit","gas_price","source_address","code"]
         }
+      },
+      {
+        name: "createContract",
+        description: "同步创建合约",
+        inputSchema: {
+          type: "object",
+          properties: {
+            apiKey: {
+              type: "string",
+              description: "API key for authentication"
+            },
+            apiSecret: {
+              type: "string",
+              description: "header apiSecret"
+            },
+            contract_code: {
+              type: "string",
+              description: "合约代码"
+            },
+            init_input: {
+              type: "string",
+              description: "合约初始化代码"
+            },
+            type: {
+              type: "number",
+              description: "合约类型(0:JS合约1:Evm合约)"
+            }
+          },
+          required: ["apiKey", "apiSecret","contract_code","init_input","type"]
+        }
+      },
+      {
+        name: "asyncCreateContract",
+        description: "异步创建合约",
+        inputSchema: {
+          type: "object",
+          properties: {
+            apiKey: {
+              type: "string",
+              description: "API key for authentication"
+            },
+            apiSecret: {
+              type: "string",
+              description: "header apiSecret"
+            },
+            contract_code: {
+              type: "string",
+              description: "合约代码"
+            },
+            init_input: {
+              type: "string",
+              description: "合约初始化代码"
+            },
+            type: {
+              type: "number",
+              description: "合约类型(0:JS合约1:Evm合约)"
+            }
+          },
+          required: ["apiKey", "apiSecret","contract_code","init_input","type"]
+        }
+      },
+      {
+        name: "queryContractAddress",
+        description: "根据hash查询合约地址",
+        inputSchema: {
+          type: "object",
+          properties: {
+            apiKey: {
+              type: "string",
+              description: "API key for authentication"
+            },
+            apiSecret: {
+              type: "string",
+              description: "header apiSecret"
+            },
+            hash: {
+              type: "string",
+              description: "交易hash"
+            }
+          },
+          required: ["apiKey", "apiSecret","hash"]
+        }
+      },
+      {
+        name: "invokeContract",
+        description: "同步合约调用",
+        inputSchema: {
+          type: "object",
+          properties: {
+            apiKey: {
+              type: "string",
+              description: "API key for authentication"
+            },
+            apiSecret: {
+              type: "string",
+              description: "header apiSecret"
+            },
+            operations: {
+              type: "array",
+              description: "操作列表",
+              items: {
+                type: "object",
+                properties: {
+                  contract_address: {
+                    type: "string",
+                    description: "合约地址"
+                  },
+                  input_str: {
+                    type: "string",
+                    description: "合约执行内容"
+                  }
+                },
+                required: ["contract_address", "input_str"]
+              }
+            }
+          },
+          required: ["apiKey", "apiSecret","operations"]
+        }
+      },
+      {
+        name: "asyncInvokeContract",
+        description: "异步合约调用",
+        inputSchema: {
+          type: "object",
+          properties: {
+            apiKey: {
+              type: "string",
+              description: "API key for authentication"
+            },
+            apiSecret: {
+              type: "string",
+              description: "header apiSecret"
+            },
+            operations: {
+              type: "array",
+              description: "操作列表",
+              items: {
+                type: "object",
+                properties: {
+                  contract_address: {
+                    type: "string",
+                    description: "合约地址"
+                  },
+                  input_str: {
+                    type: "string",
+                    description: "合约执行内容"
+                  }
+                },
+                required: ["contract_address", "input_str"]
+              }
+            }
+          },
+          required: ["apiKey", "apiSecret","operations"]
+        }
+      },
+      {
+        name: "queryByTxId",
+        description: "根据txId查询增强交易结果",
+        inputSchema: {
+          type: "object",
+          properties: {
+            apiKey: {
+              type: "string",
+              description: "API key for authentication"
+            },
+            apiSecret: {
+              type: "string",
+              description: "header apiSecret"
+            },
+            tx_id: {
+              type: "string",
+              description: "交易ID"
+            }
+          },
+          required: ["apiKey", "apiSecret","tx_id"]
+        }
       }
     ]
   };
@@ -997,6 +1173,238 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       try {
         const result = await bitFactoryClient.callContract({apiSecret, contract_address, domain_id, input, contract_balance, fee_limit, gas_price, source_address, code});
+        const jsonResult = JSON.parse(result);
+        return {  
+          content: [{
+            type: "text",
+            text: JSON.stringify(jsonResult, null, 2)
+          }]
+        };
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          throw new Error(`Get chain account failed: ${error.message}`);
+        }
+        throw new Error('Get chain account failed: Unknown error');
+      }
+    }
+
+    case "createContract": {
+      const args = request.params.arguments;
+      if (!args || typeof args !== 'object') {
+        throw new Error("Invalid arguments provided");
+      }
+
+      const apiKey = String(args.apiKey || "").trim();
+      const apiSecret = String(args.apiSecret || "").trim();
+      const contract_code = String(args.contract_code || "").trim();
+      const init_input = String(args.init_input || "").trim();
+      const type = args.type !== undefined ? Number(args.type) : undefined;
+
+      if (!apiKey) {
+        throw new Error("apiKey is required");
+      }
+      if (!contract_code) {
+        throw new Error("contract_code is required");
+      }
+      if (type === undefined) {
+        throw new Error("type is required");
+      } 
+
+      const baseUrl = `https://bif-testnet.bitfactory.cn/enhance/${apiKey}`;
+      const bitFactoryClient = new BitFactoryClient({ apiUrl: baseUrl });
+
+      try {
+        const result = await bitFactoryClient.createContract({apiSecret, contract_code, init_input, type});
+        const jsonResult = JSON.parse(result);
+        return {  
+          content: [{
+            type: "text",
+            text: JSON.stringify(jsonResult, null, 2)
+          }]
+        };
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          throw new Error(`Get chain account failed: ${error.message}`);
+        }
+        throw new Error('Get chain account failed: Unknown error');
+      }
+    }
+
+    case "asyncCreateContract": {
+      const args = request.params.arguments;
+      if (!args || typeof args !== 'object') {
+        throw new Error("Invalid arguments provided");
+      }
+
+      const apiKey = String(args.apiKey || "").trim();
+      const apiSecret = String(args.apiSecret || "").trim();
+      const contract_code = String(args.contract_code || "").trim();
+      const init_input = String(args.init_input || "").trim();
+      const type = args.type !== undefined ? Number(args.type) : undefined;
+
+      if (!apiKey) {
+        throw new Error("apiKey is required");
+      }
+      if (!contract_code) {
+        throw new Error("contract_code is required");
+      }
+      if (type === undefined) {
+        throw new Error("type is required");
+      } 
+
+      const baseUrl = `https://bif-testnet.bitfactory.cn/enhance/${apiKey}`;
+      const bitFactoryClient = new BitFactoryClient({ apiUrl: baseUrl });
+
+      try {
+        const result = await bitFactoryClient.asyncCreateContract({apiSecret, contract_code, init_input, type});
+        const jsonResult = JSON.parse(result);
+        return {  
+          content: [{
+            type: "text",
+            text: JSON.stringify(jsonResult, null, 2)
+          }]
+        };
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          throw new Error(`Get chain account failed: ${error.message}`);
+        }
+        throw new Error('Get chain account failed: Unknown error');
+      }
+    }
+
+    case "queryContractAddress": {
+      const args = request.params.arguments;
+      if (!args || typeof args !== 'object') {
+        throw new Error("Invalid arguments provided");
+      }
+
+      const apiKey = String(args.apiKey || "").trim();
+      const apiSecret = String(args.apiSecret || "").trim();
+      const hash = String(args.hash || "").trim();
+
+      if (!apiKey) {
+        throw new Error("apiKey is required");
+      }
+      if (!hash) {
+        throw new Error("hash is required");
+      }
+
+      const baseUrl = `https://bif-testnet.bitfactory.cn/enhance/${apiKey}`;
+      const bitFactoryClient = new BitFactoryClient({ apiUrl: baseUrl });
+
+      try {
+        const result = await bitFactoryClient.queryContractAddress({apiSecret, hash});
+        const jsonResult = JSON.parse(result);
+        return {  
+          content: [{
+            type: "text",
+            text: JSON.stringify(jsonResult, null, 2)
+          }]
+        };
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          throw new Error(`Get chain account failed: ${error.message}`);
+        }
+        throw new Error('Get chain account failed: Unknown error');
+      }
+    }
+
+    case "invokeContract": {
+      const args = request.params.arguments;
+      if (!args || typeof args !== 'object') {
+        throw new Error("Invalid arguments provided");
+      }
+
+      const apiKey = String(args.apiKey || "").trim();
+      const apiSecret = String(args.apiSecret || "").trim();
+      const operations = args.operations;
+
+      if (!apiKey) {
+        throw new Error("apiKey is required");
+      }
+      if (!operations) {
+        throw new Error("operations is required");
+      }
+
+      const baseUrl = `https://bif-testnet.bitfactory.cn/enhance/${apiKey}`;
+      const bitFactoryClient = new BitFactoryClient({ apiUrl: baseUrl });
+
+      try {
+        const result = await bitFactoryClient.invokeContract({apiSecret, operations: operations as Array<Record<string, string>>});
+        const jsonResult = JSON.parse(result);
+        return {  
+          content: [{
+            type: "text",
+            text: JSON.stringify(jsonResult, null, 2)
+          }]
+        };
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          throw new Error(`Get chain account failed: ${error.message}`);
+        }
+        throw new Error('Get chain account failed: Unknown error');
+      }
+    }
+
+    case "asyncInvokeContract": {
+      const args = request.params.arguments;
+      if (!args || typeof args !== 'object') {
+        throw new Error("Invalid arguments provided");
+      }
+
+      const apiKey = String(args.apiKey || "").trim();
+      const apiSecret = String(args.apiSecret || "").trim();
+      const operations = args.operations;
+
+      if (!apiKey) {
+        throw new Error("apiKey is required");
+      }
+      if (!operations) {
+        throw new Error("operations is required");
+      }
+
+      const baseUrl = `https://bif-testnet.bitfactory.cn/enhance/${apiKey}`;
+      const bitFactoryClient = new BitFactoryClient({ apiUrl: baseUrl });
+
+      try {
+        const result = await bitFactoryClient.asyncInvokeContract({apiSecret, operations: operations as Array<Record<string, string>>});
+        const jsonResult = JSON.parse(result);
+        return {  
+          content: [{
+            type: "text",
+            text: JSON.stringify(jsonResult, null, 2)
+          }]
+        };
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          throw new Error(`Get chain account failed: ${error.message}`);
+        }
+        throw new Error('Get chain account failed: Unknown error');
+      }
+    }
+
+    case "queryByTxId": {
+      const args = request.params.arguments;
+      if (!args || typeof args !== 'object') {
+        throw new Error("Invalid arguments provided");
+      }
+
+      const apiKey = String(args.apiKey || "").trim();
+      const apiSecret = String(args.apiSecret || "").trim();
+      const tx_id = String(args.tx_id || "").trim();
+
+      if (!apiKey) {
+        throw new Error("apiKey is required");
+      }
+      if (!tx_id) {
+        throw new Error("tx_id is required");
+      }
+
+      const baseUrl = `https://bif-testnet.bitfactory.cn/enhance/${apiKey}`;
+      const bitFactoryClient = new BitFactoryClient({ apiUrl: baseUrl });
+
+      try {
+        const result = await bitFactoryClient.queryByTxId({apiSecret, tx_id});
         const jsonResult = JSON.parse(result);
         return {  
           content: [{

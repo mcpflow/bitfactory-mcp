@@ -585,4 +585,142 @@ async getAccount({apiSecret, address, domainid, height, key }:
       throw new Error('Call contract failed: Unknown error');
     }
   }
+
+  async createContract ({apiSecret, contract_code, init_input, type }:
+    {apiSecret: string, contract_code: string, init_input: string|undefined, type: number}): Promise<string> {
+    try {
+      const params: Record<string, string | number> = {
+        contract_code: contract_code,
+        type: type
+      };
+      if (init_input !== undefined) {
+        params.init_input = init_input;
+      }
+      const responseText = await this.sendPost({
+        apiSecret: apiSecret,
+        path: 'account/create/contract',
+        params: JSON.stringify(params)
+      });
+      return responseText;
+
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new Error(`Call contract failed: ${error.message}`);
+      }
+      throw new Error('Call contract failed: Unknown error');
+    }
+  }
+
+  async asyncCreateContract ({apiSecret, contract_code, init_input, type }:
+    {apiSecret: string, contract_code: string, init_input: string|undefined, type: number}): Promise<string> {
+    try {
+      const params: Record<string, string | number> = {
+        contract_code: contract_code,
+        type: type
+      };
+      if (init_input !== undefined) {
+        params.init_input = init_input;
+      }
+      const responseText = await this.sendPost({
+        apiSecret: apiSecret,
+        path: 'account/asyn/create/contract',
+        params: JSON.stringify(params)
+      });
+      return responseText;
+
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new Error(`Call contract failed: ${error.message}`);
+      }
+      throw new Error('Call contract failed: Unknown error');
+    }
+  }
+
+  async queryContractAddress ({apiSecret, hash }:
+    {apiSecret: string, hash: string}): Promise<string> {
+    try {
+      const params: Record<string, string | number> = {
+        hash: hash
+      };
+      
+      const responseText = await this.sendGet({
+        apiSecret: apiSecret,
+        path: 'tx/query/contractAddress',
+        params: params
+      });
+      return responseText;
+
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new Error(`Call contract failed: ${error.message}`);
+      }
+      throw new Error('Call contract failed: Unknown error');
+    }
+  }
+
+  async invokeContract ({apiSecret, operations }:
+    {apiSecret: string, operations: Array<Record<string, string>>}): Promise<string> {
+    try {
+      const params: Record<string, Array<Record<string, string>>> = {
+        operations: operations
+      };
+      
+      const responseText = await this.sendPost({
+        apiSecret: apiSecret,
+        path: 'tx/invoke/contract',
+        params: JSON.stringify(params)
+      });
+      return responseText;
+
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new Error(`Call contract failed: ${error.message}`);
+      }
+      throw new Error('Call contract failed: Unknown error');
+    }
+  }
+
+  async asyncInvokeContract ({apiSecret, operations }:
+    {apiSecret: string, operations: Array<Record<string, string>>}): Promise<string> {
+    try {
+      const params: Record<string, Array<Record<string, string>>> = {
+        operations: operations
+      };
+      
+      const responseText = await this.sendPost({
+        apiSecret: apiSecret,
+        path: 'tx/invoke/contract',
+        params: JSON.stringify(params)
+      });
+      return responseText;
+
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new Error(`Call contract failed: ${error.message}`);
+      }
+      throw new Error('Call contract failed: Unknown error');
+    }
+  }
+
+  async queryByTxId ({apiSecret, tx_id }:
+    {apiSecret: string, tx_id: string}): Promise<string> {
+    try {
+      const params: Record<string, string | number> = {
+        tx_id: tx_id
+      };
+      
+      const responseText = await this.sendGet({
+        apiSecret: apiSecret,
+        path: 'tx/queryByTxId',
+        params: params
+      });
+      return responseText;
+
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new Error(`Call contract failed: ${error.message}`);
+      }
+      throw new Error('Call contract failed: Unknown error');
+    }
+  }
 }
