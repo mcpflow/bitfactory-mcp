@@ -723,4 +723,26 @@ async getAccount({apiSecret, address, domainid, height, key }:
       throw new Error('Call contract failed: Unknown error');
     }
   }
+
+  async testTransaction ({apiSecret, items }:
+    {apiSecret: string, items: Array<Record<string, Object>>}): Promise<string> {
+    try {
+      const params: Record<string, Array<Record<string, Object>>> = {
+        items: items  
+      };
+      
+      const responseText = await this.sendPost({
+        apiSecret: apiSecret,
+        path: 'testTransaction',
+        params: JSON.stringify(params)
+      });
+      return responseText;
+
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new Error(`Call contract failed: ${error.message}`);
+      }
+      throw new Error('Call contract failed: Unknown error');
+    }
+  }
 }

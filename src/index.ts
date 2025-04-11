@@ -671,6 +671,77 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["apiKey", "apiSecret","tx_id"]
         }
+      },
+      {
+        name: "testTransaction",
+        description: "交易费用评估",
+        inputSchema: {
+          type: "object",
+          properties: {
+            apiKey: {
+              type: "string",
+              description: "API key for authentication"
+            },
+            apiSecret: {
+              type: "string",
+              description: "header apiSecret"
+            },
+            items: {
+              type: "array",
+              description: "交易数据",
+              items: {
+                type: "object",
+                properties: {
+                  transaction_json: {
+                    type: "object",
+                    description: "交易数据",
+                    properties: {
+                      source_address: {
+                        type: "string",
+                        description: "交易源账号"
+                      },
+                      fee_limit: {
+                        type: "number",
+                        description: "feelimit"
+                      },
+                      gas_price: {
+                        type: "number",
+                        description: "gas"
+                      },
+                      ceil_ledger_seq: {
+                        type: "number",
+                        description: "区块高度限制"
+                      },
+                      nonce: {
+                        type: "number",
+                        description: "nonce"
+                      },
+                      nonce_type: {
+                        type: "number",
+                        description: "	nonce类型 0-自增nonce 1-随机nonce,默认0"
+                      },
+                      max_ledger_seq: {
+                        type: "number",
+                        description: "最大区块高度,默认0"
+                      },
+                      metadata: {
+                        type: "string",
+                        description: "用户自定义给交易的备注"
+                      },
+                      operations: {
+                        type: "array",
+                        description: "交易操作"
+                      }
+                    },
+                    required: ["source_address","fee_limit","gas_price","ceil_ledger_seq","nonce","nonce_type","max_ledger_seq","metadata","operations"]
+                  }
+                },
+                required: ["transaction_json"]
+              }
+            }
+          },
+          required: ["items"]
+        }
       }
     ]
   };
@@ -1405,6 +1476,43 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       try {
         const result = await bitFactoryClient.queryByTxId({apiSecret, tx_id});
+        const jsonResult = JSON.parse(result);
+        return {  
+          content: [{
+            type: "text",
+            text: JSON.stringify(jsonResult, null, 2)
+          }]
+        };
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          throw new Error(`Get chain account failed: ${error.message}`);
+        }
+        throw new Error('Get chain account failed: Unknown error');
+      }
+    }
+
+    case "testTransaction": {
+      const args = request.params.arguments;
+      if (!args || typeof args !== 'object') {
+        throw new Error("Invalid arguments provided");
+      }
+
+      const apiKey = String(args.apiKey || "").trim();
+      const apiSecret = String(args.apiSecret || "").trim();
+      const items = args.items;
+
+      if (!apiKey) {
+        throw new Error("apiKey is required");
+      }
+      if (!items) {
+        throw new Error("items is required");
+      }
+
+      const baseUrl = `https://bif-testnet.bitfactory.cn/base/${apiKey}`;
+      const bitFactoryClient = new BitFactoryClient({ apiUrl: baseUrl });
+
+      try {
+        const result = await bitFactoryClient.testTransaction({apiSecret, items: items as Array<Record<string, Object>>});
         const jsonResult = JSON.parse(result);
         return {  
           content: [{
